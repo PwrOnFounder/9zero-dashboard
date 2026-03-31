@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9Zero Hub — Climate Innovation Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+/* ================================================================
+   DESIGN TOKENS
+   ================================================================ */
+:root {
+  --text-xs: clamp(0.6875rem, 0.66rem + 0.14vw, 0.75rem);
+  --text-sm: clamp(0.75rem, 0.72rem + 0.16vw, 0.8125rem);
+  --text-base: clamp(0.8125rem, 0.78rem + 0.16vw, 0.875rem);
+  --text-lg: clamp(1rem, 0.92rem + 0.4vw, 1.125rem);
+  --text-xl: clamp(1.125rem, 0.95rem + 0.88vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.1rem + 2vw, 2.25rem);
+  --text-3xl: clamp(2rem, 1.4rem + 3vw, 3rem);
+
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+  --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem;
+  --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+  --space-16: 4rem; --space-20: 5rem;
+
+  --radius-sm: 6px; --radius-md: 8px;
+  --radius-lg: 12px; --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 150ms var(--ease-out);
+  --transition-med: 250ms var(--ease-out);
+  --transition-slow: 400ms var(--ease-out);
+
+  --sidebar-width: 240px;
+  --header-height: 56px;
+}
+
+/* LIGHT MODE */
+:root, [data-theme="light"] {
+  --color-bg: #f4f7f5;
+  --color-surface: #ffffff;
+  --color-surface-2: #f8faf9;
+  --color-surface-offset: #edf1ee;
+  --color-divider: #dce3de;
+  --color-border: #c8d4cc;
+  --color-text: #0f2318;
+  --color-text-muted: #5a7066;
+  --color-text-faint: #8da098;
+  --color-text-inverse: #f4f7f5;
+  --color-primary: #1B4332;
+  --color-primary-hover: #143828;
+  --color-accent: #0d9488;
+  --color-accent-text: #0d9488;
+  --color-accent-bright: #2DD4BF;
+  --color-accent-hover: #14b8a6;
+  --color-accent-muted: rgba(13,148,136,0.08);
+  --color-accent-glow: rgba(45,212,191,0.15);
+  --color-error: #dc2626;
+  --color-warning: #d97706;
+  --color-success: #16a34a;
+  --color-sidebar-bg: #0f2b22;
+  --color-sidebar-text: #d0e0d6;
+  --color-sidebar-muted: rgba(208,224,214,0.5);
+  --color-sidebar-active: rgba(45,212,191,0.12);
+  --color-sidebar-hover: rgba(255,255,255,0.05);
+  --shadow-sm: 0 1px 3px rgba(15,35,24,0.05);
+  --shadow-md: 0 4px 12px rgba(15,35,24,0.07);
+  --shadow-lg: 0 12px 32px rgba(15,35,24,0.1);
+  --shadow-glow: 0 0 20px rgba(45,212,191,0.1);
+}
+
+/* DARK MODE */
+[data-theme="dark"] {
+  --color-bg: #070e0b;
+  --color-surface: #0d1814;
+  --color-surface-2: #12211b;
+  --color-surface-offset: #0a1410;
+  --color-divider: #1a2e25;
+  --color-border: #223d33;
+  --color-text: #cdddd5;
+  --color-text-muted: #6e9484;
+  --color-text-faint: #3d5a4e;
+  --color-text-inverse: #070e0b;
+  --color-primary: #2DD4BF;
+  --color-primary-hover: #5eead4;
+  --color-accent: #2DD4BF;
+  --color-accent-text: #2DD4BF;
+  --color-accent-bright: #5eead4;
+  --color-accent-hover: #5eead4;
+  --color-accent-muted: rgba(45,212,191,0.06);
+  --color-accent-glow: rgba(45,212,191,0.08);
+  --color-error: #f87171;
+  --color-warning: #fbbf24;
+  --color-success: #4ade80;
+  --color-sidebar-bg: #060d09;
+  --color-sidebar-text: #cdddd5;
+  --color-sidebar-muted: #4a6e5e;
+  --color-sidebar-active: rgba(45,212,191,0.1);
+  --color-sidebar-hover: rgba(45,212,191,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.45);
+  --shadow-glow: 0 0 30px rgba(45,212,191,0.06);
+}
+
+/* ================================================================
+   BASE
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; height: 100%; overflow: hidden; }
+body { height: 100%; overflow: hidden; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); background: var(--color-bg); line-height: 1.55; }
+h1,h2,h3,h4,h5,h6 { font-family: var(--font-display); line-height: 1.2; }
+button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+table { border-collapse: collapse; width: 100%; }
+input, select { font: inherit; color: inherit; background: transparent; }
+ul, ol { list-style: none; }
+a { color: var(--color-accent-text); text-decoration: none; transition: color var(--transition-fast); }
+a:hover { color: var(--color-accent-hover); }
+::selection { background: rgba(45,212,191,0.2); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+.mono { font-family: var(--font-mono); font-size: 0.9em; }
+.tabular { font-variant-numeric: tabular-nums lining-nums; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+.app { display: grid; grid-template-columns: var(--sidebar-width) 1fr; height: 100dvh; }
+
+/* SIDEBAR */
+.sidebar {
+  grid-row: 1 / -1;
+  background: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-divider);
+  display: flex; flex-direction: column;
+  overflow-y: auto; overscroll-behavior: contain;
+  z-index: 30;
+}
+.sidebar-brand {
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; gap: var(--space-3);
+  min-height: 64px;
+}
+.sidebar-brand svg { flex-shrink: 0; }
+.sidebar-brand-text .logo-text { font-size: var(--text-base); font-weight: 800; color: #fff; letter-spacing: -0.03em; }
+.sidebar-brand-text .logo-sub { font-size: 10px; color: var(--color-sidebar-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+
+.sidebar-search {
+  margin: var(--space-3) var(--space-3) 0;
+  position: relative;
+}
+.sidebar-search input {
+  width: 100%; padding: var(--space-2) var(--space-3) var(--space-2) 36px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-md); color: var(--color-sidebar-text);
+  font-size: var(--text-xs); transition: all var(--transition-fast);
+}
+.sidebar-search input:focus { background: rgba(255,255,255,0.07); border-color: rgba(45,212,191,0.3); outline: none; }
+.sidebar-search input::placeholder { color: var(--color-sidebar-muted); }
+.sidebar-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-sidebar-muted); pointer-events: none; }
+
+.sidebar-nav { padding: var(--space-3); flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.nav-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-sidebar-muted); padding: var(--space-4) var(--space-3) var(--space-1); font-weight: 600; }
+.nav-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+  font-size: var(--text-sm); font-weight: 500;
+  color: var(--color-sidebar-muted); cursor: pointer;
+  transition: all var(--transition-fast); border: none; width: 100%; text-align: left;
+  position: relative;
+}
+.nav-item:hover { background: var(--color-sidebar-hover); color: var(--color-sidebar-text); }
+.nav-item.active { background: var(--color-sidebar-active); color: var(--color-accent-bright); }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 25%; bottom: 25%; width: 3px; background: var(--color-accent-bright); border-radius: 0 3px 3px 0; }
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.6; }
+.nav-item.active svg { opacity: 1; }
+.nav-badge { margin-left: auto; font-size: 10px; font-weight: 700; background: rgba(45,212,191,0.15); color: var(--color-accent-bright); padding: 1px 6px; border-radius: var(--radius-full); }
+
+.sidebar-footer {
+  padding: var(--space-4) var(--space-5); border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 10px; color: var(--color-sidebar-muted); line-height: 1.6;
+}
+
+/* HEADER */
+.header {
+  background: var(--color-surface); border-bottom: 1px solid var(--color-divider);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--space-6); height: var(--header-height);
+  position: sticky; top: 0; z-index: 20;
+}
+.header-left { display: flex; align-items: center; gap: var(--space-4); }
+.page-title { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; }
+.header-badge { display: inline-flex; align-items: center; gap: var(--space-2); padding: 3px 10px; background: var(--color-accent-muted); color: var(--color-accent-text); border-radius: var(--radius-full); font-size: var(--text-xs); font-weight: 600; }
+.header-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent-bright); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.header-right { display: flex; align-items: center; gap: var(--space-3); }
+.header-meta { font-size: var(--text-xs); color: var(--color-text-muted); }
+.theme-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: var(--radius-md);
+  color: var(--color-text-muted); transition: all var(--transition-fast);
+}
+.theme-toggle:hover { background: var(--color-surface-offset); color: var(--color-text); }
+.hamburger { display: none; width: 36px; height: 36px; border-radius: var(--radius-md); color: var(--color-text); align-items: center; justify-content: center; }
+
+/* MAIN */
+.main {
+  grid-column: 2; overflow-y: auto; overscroll-behavior: contain;
+  padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6);
+}
+
+/* PAGES */
+.page { display: none; flex-direction: column; gap: var(--space-6); animation: fadeIn 0.3s var(--ease-out); }
+.page.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ================================================================
+   SHARED COMPONENTS
+   ================================================================ */
+
+/* KPI Cards */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-4); }
+.kpi-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); padding: var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-2);
+  transition: all var(--transition-fast); position: relative; overflow: hidden;
+}
+.kpi-card:hover { border-color: var(--color-accent); box-shadow: var(--shadow-glow); transform: translateY(-1px); }
+.kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--color-accent-bright), transparent); opacity: 0; transition: opacity var(--transition-fast); }
+.kpi-card:hover::after { opacity: 1; }
+.kpi-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-value { font-size: var(--text-xl); font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.kpi-value.accent { color: var(--color-accent-text); }
+.kpi-sub { font-size: var(--text-xs); color: var(--color-text-faint); }
+.kpi-delta { font-size: var(--text-xs); font-weight: 600; }
+.kpi-delta.up { color: var(--color-success); }
+.kpi-delta.down { color: var(--color-error); }
+
+/* Section headers */
+.section-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.section-title { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; }
+.section-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* Cards */
+.card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); padding: var(--space-5);
+  transition: all var(--transition-fast);
+}
+.card:hover { border-color: var(--color-accent); box-shadow: var(--shadow-md); }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
+
+/* Tables */
+.table-wrap { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+.table-toolbar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); border-bottom: 1px solid var(--color-divider); flex-wrap: wrap; }
+.table-toolbar input, .table-toolbar select {
+  padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); font-size: var(--text-xs);
+  background: var(--color-surface-2); transition: border-color var(--transition-fast);
+}
+.table-toolbar input:focus, .table-toolbar select:focus { border-color: var(--color-accent); outline: none; }
+.table-scroll { overflow-x: auto; }
+.data-table { font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.data-table thead { position: sticky; top: 0; z-index: 1; }
+.data-table th {
+  padding: var(--space-3) var(--space-4); text-align: left;
+  font-size: var(--text-xs); font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--color-text-muted);
+  background: var(--color-surface-offset); border-bottom: 1px solid var(--color-divider);
+  white-space: nowrap; cursor: pointer; user-select: none;
+}
+.data-table th:hover { color: var(--color-text); }
+.data-table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); vertical-align: middle; }
+.data-table tbody tr { transition: background var(--transition-fast); }
+.data-table tbody tr:hover { background: var(--color-accent-muted); }
+
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; padding: 2px 8px;
+  border-radius: var(--radius-full); font-size: var(--text-xs); font-weight: 600; white-space: nowrap;
+}
+.badge-open { background: rgba(74,222,128,0.12); color: var(--color-success); }
+.badge-urgent { background: rgba(248,113,113,0.12); color: var(--color-error); }
+.badge-coming { background: rgba(251,191,36,0.12); color: var(--color-warning); }
+.badge-closed { background: rgba(120,120,120,0.12); color: var(--color-text-muted); }
+.badge-sector { background: var(--color-accent-muted); color: var(--color-accent-text); }
+
+/* Star rating */
+.stars { color: var(--color-accent-text); letter-spacing: 2px; }
+.star-empty { opacity: 0.2; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-md);
+  font-size: var(--text-xs); font-weight: 600; transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.btn-primary { background: var(--color-primary); color: var(--color-text-inverse); }
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-ghost { color: var(--color-text-muted); }
+.btn-ghost:hover { color: var(--color-text); background: var(--color-surface-offset); }
+.btn-accent { background: var(--color-accent-muted); color: var(--color-accent-text); border: 1px solid rgba(45,212,191,0.2); }
+.btn-accent:hover { background: rgba(45,212,191,0.15); }
+
+/* Filter chips */
+.filter-bar { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.chip {
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-full);
+  font-size: var(--text-xs); font-weight: 500; cursor: pointer;
+  border: 1px solid var(--color-border); color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+.chip:hover { border-color: var(--color-accent); color: var(--color-text); }
+.chip.active { background: var(--color-accent-muted); border-color: var(--color-accent); color: var(--color-accent-text); }
+
+/* Progress bar */
+.progress-bar { height: 6px; background: var(--color-surface-offset); border-radius: var(--radius-full); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s var(--ease-out); }
+.progress-fill.green { background: linear-gradient(90deg, var(--color-success), var(--color-accent-bright)); }
+.progress-fill.yellow { background: linear-gradient(90deg, var(--color-warning), #fde047); }
+.progress-fill.red { background: linear-gradient(90deg, var(--color-error), #fca5a5); }
+
+/* Countdown */
+.countdown { display: flex; gap: var(--space-2); }
+.countdown-unit {
+  text-align: center; background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); min-width: 48px;
+}
+.countdown-num { font-size: var(--text-lg); font-weight: 800; font-variant-numeric: tabular-nums; color: var(--color-accent-text); }
+.countdown-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-faint); }
+
+/* Chart containers */
+.chart-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); }
+.chart-title { font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-3); }
+.chart-container { position: relative; height: 250px; }
+
+/* Tooltip */
+.tooltip-container { position: relative; }
+.tooltip-content {
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: var(--space-3) var(--space-4);
+  font-size: var(--text-xs); color: var(--color-text); white-space: nowrap;
+  box-shadow: var(--shadow-lg); opacity: 0; pointer-events: none;
+  transition: opacity var(--transition-fast); z-index: 50;
+}
+.tooltip-container:hover .tooltip-content { opacity: 1; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: var(--space-16) var(--space-8); color: var(--color-text-faint); }
+.empty-state svg { margin: 0 auto var(--space-4); opacity: 0.3; }
+.empty-state p { font-size: var(--text-sm); }
+
+/* Tabs */
+.tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--color-divider); }
+.tab-btn {
+  padding: var(--space-3) var(--space-4); font-size: var(--text-sm); font-weight: 500;
+  color: var(--color-text-muted); border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast); cursor: pointer;
+}
+.tab-btn:hover { color: var(--color-text); }
+.tab-btn.active { color: var(--color-accent-text); border-bottom-color: var(--color-accent-text); }
+
+/* Score bar */
+.score-bar { display: flex; align-items: center; gap: var(--space-2); }
+.score-fill-bg { flex: 1; height: 8px; background: var(--color-surface-offset); border-radius: var(--radius-full); overflow: hidden; }
+.score-fill { height: 100%; border-radius: var(--radius-full); background: linear-gradient(90deg, var(--color-accent), var(--color-accent-bright)); transition: width 0.6s var(--ease-out); }
+.score-num { font-size: var(--text-xs); font-weight: 700; color: var(--color-accent-text); min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--color-border); }
+.timeline-item { position: relative; padding-bottom: var(--space-6); }
+.timeline-dot {
+  position: absolute; left: -20px; top: 4px; width: 12px; height: 12px;
+  border-radius: 50%; border: 2px solid var(--color-accent); background: var(--color-bg);
+}
+.timeline-dot.filled { background: var(--color-accent); }
+.timeline-dot.warning { border-color: var(--color-warning); }
+.timeline-dot.error { border-color: var(--color-error); }
+.timeline-date { font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 500; margin-bottom: 2px; }
+.timeline-title { font-size: var(--text-sm); font-weight: 600; }
+.timeline-desc { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+  z-index: 100; display: none; align-items: center; justify-content: center;
+  animation: fadeIn 0.2s var(--ease-out);
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl); padding: var(--space-8);
+  max-width: 640px; width: 90%; max-height: 80vh; overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.modal-title { font-size: var(--text-xl); font-weight: 700; margin-bottom: var(--space-4); }
+.modal-close { position: absolute; top: var(--space-4); right: var(--space-4); }
+
+/* Network graph */
+#ecosystem-graph { width: 100%; height: 500px; border-radius: var(--radius-lg); overflow: hidden; }
+
+/* Calculator */
+.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.calc-input-group { display: flex; flex-direction: column; gap: var(--space-1); }
+.calc-input-group label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.calc-input-group input, .calc-input-group select {
+  padding: var(--space-3); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); font-size: var(--text-base);
+  background: var(--color-surface-2);
+}
+.calc-result {
+  background: linear-gradient(135deg, var(--color-primary), rgba(45,212,191,0.3));
+  border-radius: var(--radius-lg); padding: var(--space-6); text-align: center;
+  margin-top: var(--space-4);
+}
+[data-theme="light"] .calc-result { color: #fff; }
+.calc-result-value { font-size: var(--text-2xl); font-weight: 800; }
+.calc-result-label { font-size: var(--text-sm); opacity: 0.8; margin-top: var(--space-1); }
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 768px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; left: -280px; width: 280px; top: 0; bottom: 0; transition: left var(--transition-med); z-index: 50; }
+  .sidebar.open { left: 0; }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+  .sidebar-overlay.open { display: block; }
+  .hamburger { display: flex; }
+  .header { grid-column: 1; }
+  .main { grid-column: 1; padding: var(--space-4); }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .card-grid { grid-template-columns: 1fr; }
+  .calc-grid { grid-template-columns: 1fr; }
+  .table-toolbar { flex-direction: column; align-items: stretch; }
+  .main > .page > div[style*="grid-template-columns: 1fr 1fr"],
+  .main > .page > div[style*="grid-template-columns:1fr 1fr"] { display: flex !important; flex-direction: column !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="14" stroke="#2DD4BF" stroke-width="2.5"/>
+      <path d="M16 6 L16 16 L24 20" stroke="#2DD4BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="16" cy="16" r="3" fill="#2DD4BF"/>
+    </svg>
+    <div class="sidebar-brand-text">
+      <div class="logo-text">9Zero Hub</div>
+      <div class="logo-sub">Climate Intelligence</div>
+    </div>
+  </div>
+
+  <div class="sidebar-search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="search" id="global-search" placeholder="Search everything..." autocomplete="off">
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <button class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+
+    <div class="nav-section-label">Intelligence</div>
+    <button class="nav-item" data-page="grants" onclick="showPage('grants')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
+      Grant Matchmaker
+      <span class="nav-badge">15</span>
+    </button>
+    <button class="nav-item" data-page="rfps" onclick="showPage('rfps')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+      RFP Tracker
+      <span class="nav-badge">8</span>
+    </button>
+    <button class="nav-item" data-page="policy" onclick="showPage('policy')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Policy Tracker
+    </button>
+    <button class="nav-item" data-page="investors" onclick="showPage('investors')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><path d="M5 20V10l7-7 7 7v10"/></svg>
+      Investor Explorer
+      <span class="nav-badge">26</span>
+    </button>
+
+    <div class="nav-section-label">Community</div>
+    <button class="nav-item" data-page="members" onclick="showPage('members')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Members
+    </button>
+    <button class="nav-item" data-page="events" onclick="showPage('events')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Events
+    </button>
+    <button class="nav-item" data-page="ecosystem" onclick="showPage('ecosystem')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="7" y1="7" x2="10" y2="10"/><line x1="14" y1="10" x2="17" y2="7"/><line x1="7" y1="17" x2="10" y2="14"/><line x1="14" y1="14" x2="17" y2="17"/></svg>
+      Ecosystem Map
+    </button>
+
+    <div class="nav-section-label">Tools</div>
+    <button class="nav-item" data-page="calculator" onclick="showPage('calculator')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3m6.36-.64-2.12 2.12M21 12h-3M18.36 18.36l-2.12-2.12M12 21v-3M5.64 18.36l2.12-2.12M3 12h3M5.64 5.64l2.12 2.12"/></svg>
+      Carbon Calculator
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <strong>9Zero Seattle Climate Innovation Hub</strong><br>
+    Seattle Financial Center, Downtown<br>
+    250+ Local Members · 800+ National<br>
+    <span style="opacity:0.6">Data updated March 31, 2026</span>
+  </div>
+</aside>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <button class="hamburger" onclick="openSidebar()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <h1 class="page-title" id="page-title">Dashboard</h1>
+    <span class="header-badge">Live Intelligence</span>
+  </div>
+  <div class="header-right">
+    <span class="header-meta" id="clock"></span>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="theme-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main class="main" id="main-content">
+
+<!-- ====== DASHBOARD PAGE ====== -->
+<div class="page active" id="page-dashboard">
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">WA Clean Energy Jobs</div><div class="kpi-value accent">83,142</div><div class="kpi-sub">E2 2025 Report · +46K projected by 2032</div><div class="kpi-delta up">▲ 4.2% YoY</div></div>
+    <div class="kpi-card"><div class="kpi-label">PNW Climate VC (2025)</div><div class="kpi-value">$2B+</div><div class="kpi-sub">40% of all PNW venture capital</div><div class="kpi-delta up">▲ Record year</div></div>
+    <div class="kpi-card"><div class="kpi-label">WA EV Market Share</div><div class="kpi-value accent">21.3%</div><div class="kpi-sub">Q4 2024 · 3rd nationally</div></div>
+    <div class="kpi-card"><div class="kpi-label">Hub Members Tracked</div><div class="kpi-value">35</div><div class="kpi-sub">Startups, funds, partners in database</div></div>
+    <div class="kpi-card"><div class="kpi-label">Events Tracked</div><div class="kpi-value">17</div><div class="kpi-sub">Deadlines, conferences, milestones</div></div>
+    <div class="kpi-card"><div class="kpi-label">Investors Profiled</div><div class="kpi-value accent">26</div><div class="kpi-sub">$10B+ combined AUM</div></div>
+    <div class="kpi-card"><div class="kpi-label">Open Grants</div><div class="kpi-value">15</div><div class="kpi-sub">$400B+ in active programs</div></div>
+    <div class="kpi-card"><div class="kpi-label">PNW Climate Week</div><div class="kpi-value" id="pnw-days-out" style="color:var(--color-warning)"></div><div class="kpi-sub">July 13–19, 2026</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+    <div class="chart-card">
+      <div class="chart-title">Funding Pipeline by Status</div>
+      <div class="chart-container"><canvas id="chart-funding-pipeline"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Investment by Sector (PNW 2025)</div>
+      <div class="chart-container"><canvas id="chart-sector"></canvas></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:var(--space-3)">2026 Session Scorecard</div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+        <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs)">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--color-success)"></span>
+          <strong>SB 6355</strong> <span style="color:var(--color-text-muted)">Transmission Authority</span>
+          <span class="badge badge-open" style="margin-left:auto">Passed</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs)">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--color-success)"></span>
+          <strong>SB 5982</strong> <span style="color:var(--color-text-muted)">CETA Data Center Fix</span>
+          <span class="badge badge-open" style="margin-left:auto">Passed</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs)">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--color-success)"></span>
+          <strong>HB 1903</strong> <span style="color:var(--color-text-muted)">Energy Assistance</span>
+          <span class="badge badge-coming" style="margin-left:auto">Awaiting Sig.</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs)">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--color-error)"></span>
+          <strong>HB 2515</strong> <span style="color:var(--color-text-muted)">Data Center Energy</span>
+          <span class="badge badge-closed" style="margin-left:auto">Failed</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs)">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--color-warning)"></span>
+          <strong>Budget</strong> <span style="color:var(--color-text-muted)">$540M CCA diversion</span>
+          <span class="badge badge-urgent" style="margin-left:auto">Watch</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:var(--space-3)">Key Signals</div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);padding-left:var(--space-3);border-left:3px solid var(--color-accent-bright)">
+          <strong style="color:var(--color-text)">CCA Q1 Auction:</strong> $65.26/allowance, 13th consecutive sold-out. Cumulative revenue $4.72B.
+        </div>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);padding-left:var(--space-3);border-left:3px solid var(--color-warning)">
+          <strong style="color:var(--color-text)">IRA Credits Ended:</strong> Residential solar, EV, energy efficiency credits expired Dec 31, 2025. Battery storage & commercial credits remain.
+        </div>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);padding-left:var(--space-3);border-left:3px solid var(--color-success)">
+          <strong style="color:var(--color-text)">WA-CA-QC Linkage:</strong> Draft carbon market linkage agreement open for public comment through May 1. Potential 2027 launch.
+        </div>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);padding-left:var(--space-3);border-left:3px solid var(--color-accent)">
+          <strong style="color:var(--color-text)">Seattle GHG:</strong> 2.9M mtCO₂e (2022). BEPS targets published Jan 2026.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-header"><div class="section-title">🔥 Urgent Deadlines</div></div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Opportunity</th><th>Organization</th><th>Deadline</th><th>Value</th><th>Status</th><th>Days Left</th></tr></thead>
+        <tbody id="urgent-deadlines-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:var(--space-4)">Upcoming Events</div>
+      <div id="dashboard-events-list"></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:var(--space-4)">PNW Climate Week 2026 Countdown</div>
+      <div class="countdown" id="pnw-countdown"></div>
+      <p style="margin-top:var(--space-3);font-size:var(--text-xs);color:var(--color-text-muted)">July 13–19 · 10+ cities · 220+ events expected<br>
+      <a href="https://pnwclimateweek.org" target="_blank" rel="noopener noreferrer">pnwclimateweek.org →</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== GRANTS PAGE ====== -->
+<div class="page" id="page-grants">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Grant Matchmaker</div>
+      <div class="section-subtitle">Filter by sector, stage, and amount to find your best-fit grants</div>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="search" id="grant-search" placeholder="Search grants..." style="flex:1;min-width:200px">
+      <select id="grant-sector-filter"><option value="">All Sectors</option><option value="Energy">Energy</option><option value="Hardware">Hardware</option><option value="Software">Software</option><option value="Materials">Materials</option><option value="EV">EV / Transport</option></select>
+      <select id="grant-status-filter"><option value="">All Status</option><option value="Open">Open</option><option value="Rolling">Rolling</option><option value="Monitoring">Monitoring</option><option value="Closed">Closed</option></select>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table" id="grants-table">
+        <thead><tr><th>Program</th><th>Funder</th><th>Amount</th><th>Deadline</th><th>Status</th><th>Best For</th><th>Match</th></tr></thead>
+        <tbody id="grants-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ====== RFPS PAGE ====== -->
+<div class="page" id="page-rfps">
+  <div class="section-header">
+    <div><div class="section-title">RFP & Procurement Tracker</div><div class="section-subtitle">Seattle-area clean energy procurement opportunities</div></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="search" id="rfp-search" placeholder="Search RFPs..." style="flex:1;min-width:200px">
+      <select id="rfp-status-filter"><option value="">All Status</option><option value="Open">Open</option><option value="Upcoming">Upcoming</option><option value="Design Phase">Design Phase</option><option value="Closed">Closed</option></select>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Opportunity</th><th>Organization</th><th>Est. Value</th><th>Deadline</th><th>Status</th><th>Best For</th></tr></thead>
+        <tbody id="rfps-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ====== POLICY PAGE ====== -->
+<div class="page" id="page-policy">
+  <div class="section-header"><div><div class="section-title">Policy Tracker</div><div class="section-subtitle">WA State legislation, Seattle BEPS, and federal policy impacting climate tech</div></div></div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showPolicyTab('beps')">Seattle BEPS</button>
+    <button class="tab-btn" onclick="showPolicyTab('cca')">WA Cap-and-Invest</button>
+    <button class="tab-btn" onclick="showPolicyTab('bills')">2026 Session Results</button>
+    <button class="tab-btn" onclick="showPolicyTab('federal')">Federal</button>
+  </div>
+
+  <div id="policy-beps" class="policy-tab active" style="display:flex;flex-direction:column;gap:var(--space-4)">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:var(--space-4)">
+        <div><h3 style="font-size:var(--text-lg);font-weight:700">Seattle Building Emissions Performance Standard</h3>
+        <p style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:2px">~4,100 buildings affected · Signed Dec 13, 2023 · GHGI targets published Jan 2026</p></div>
+        <span class="badge badge-open">Active</span>
+      </div>
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-3)">Compliance Timeline</h4>
+      <div class="timeline" id="beps-timeline"></div>
+    </div>
+    <div class="card">
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-3)">Penalty Exposure</h4>
+      <table class="data-table"><thead><tr><th>Building Type</th><th>Penalty (per SF / 5yr)</th><th>Example (100K SF)</th></tr></thead>
+      <tbody>
+        <tr><td>Nonresidential</td><td style="color:var(--color-error);font-weight:600">$10.00/SF</td><td>$1,000,000</td></tr>
+        <tr><td>Multifamily</td><td style="color:var(--color-warning);font-weight:600">$7.50/SF</td><td>$750,000</td></tr>
+        <tr><td>Low-income housing</td><td>$2.50/SF</td><td>$250,000</td></tr>
+        <tr><td>Failure to report</td><td colspan="2" style="color:var(--color-error)">$15,000 flat fine</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <div id="policy-cca" class="policy-tab" style="display:none;flex-direction:column;gap:var(--space-4)">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Q1 2026 Auction Price</div><div class="kpi-value accent">$65.26</div><div class="kpi-sub">per allowance · Mar 11, 2026</div></div>
+      <div class="kpi-card"><div class="kpi-label">Q1 2026 Revenue</div><div class="kpi-value">$182.7M</div><div class="kpi-sub">13th consecutive sold-out auction</div></div>
+      <div class="kpi-card"><div class="kpi-label">Cumulative Revenue</div><div class="kpi-value accent">$4.72B</div><div class="kpi-sub">since program inception</div></div>
+      <div class="kpi-card"><div class="kpi-label">2026 Emissions Cap</div><div class="kpi-value">49M</div><div class="kpi-sub">metric tons CO₂e · 7%/yr decline</div></div>
+    </div>
+    <div class="card" style="border-left:3px solid var(--color-accent-bright)">
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-2)">🔗 WA-CA-QC Carbon Market Linkage</h4>
+      <p style="font-size:var(--text-xs);color:var(--color-text-muted)">Draft agreement for WA-California-Quebec carbon market linkage released for public comment. Comment deadline: <strong style="color:var(--color-warning)">May 1, 2026</strong>. Potential launch: 2027. Would create the largest carbon market in North America.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--color-warning)">
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-2)">⚠️ CCA Budget Diversion</h4>
+      <p style="font-size:var(--text-xs);color:var(--color-text-muted)">Legislature diverted ~$540M from CCA revenue to fill general fund budget gaps in the 2026 session. This reduces climate investment accounts and may affect future grant funding levels.</p>
+    </div>
+    <div class="card">
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-3)">CCA Investment Accounts</h4>
+      <table class="data-table"><thead><tr><th>Account</th><th>Focus</th><th>Est. Annual</th></tr></thead>
+      <tbody>
+        <tr><td>Climate Transit Programs</td><td>Electric buses, transit electrification</td><td style="font-weight:600">~$200M</td></tr>
+        <tr><td>Climate Commitment</td><td>Clean energy, CETCAP, audits</td><td style="font-weight:600">~$100M</td></tr>
+        <tr><td>Natural Climate Solutions</td><td>Forests, natural lands</td><td style="font-weight:600">~$100M</td></tr>
+        <tr><td>Carbon Emissions Reduction</td><td>Clean transportation</td><td>Large</td></tr>
+        <tr><td>Air Quality & Health</td><td>Environmental justice</td><td>Moderate</td></tr>
+      </tbody></table>
+      <p style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:var(--space-3)">Note: Actual allocations may be reduced due to $540M diversion. 97 covered entities.</p>
+    </div>
+  </div>
+
+  <div id="policy-bills" class="policy-tab" style="display:none">
+    <div class="card-grid" id="bills-grid"></div>
+  </div>
+
+  <div id="policy-federal" class="policy-tab" style="display:none;flex-direction:column;gap:var(--space-4)">
+    <div class="card" style="border-left:3px solid var(--color-error)">
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-2)">🚨 IRA Credits Ended (H.R.1 — Dec 31, 2025)</h4>
+      <p style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">Under H.R.1, the following IRA credits expired December 31, 2025:</p>
+      <ul style="font-size:var(--text-xs);color:var(--color-text-muted);padding-left:var(--space-4);list-style:disc;display:flex;flex-direction:column;gap:4px">
+        <li><strong>Residential Solar (Section 25D)</strong> — 30% residential clean energy credit ended</li>
+        <li><strong>EV Tax Credit (Section 30D)</strong> — $7,500 new clean vehicle credit ended</li>
+        <li><strong>Used EV Credit (Section 25E)</strong> — $4,000 used clean vehicle credit ended</li>
+        <li><strong>Energy Efficiency (Section 25C)</strong> — Home energy audit & weatherization credits ended</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left:3px solid var(--color-success)">
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-2)">✅ IRA Credits Still Active</h4>
+      <ul style="font-size:var(--text-xs);color:var(--color-text-muted);padding-left:var(--space-4);list-style:disc;display:flex;flex-direction:column;gap:4px">
+        <li><strong>Battery Storage (Section 48E)</strong> — Standalone storage ITC remains intact</li>
+        <li><strong>Geothermal Heat Pumps (Section 48)</strong> — Still eligible for 30% credit</li>
+        <li><strong>Commercial Clean Energy (Section 48E/45Y)</strong> — Production & investment credits continue</li>
+        <li><strong>CETCAP Direct Pay</strong> — WA Commerce still processing IRA direct-pay elections</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left:3px solid var(--color-warning)">
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-2)">⚠️ Additional Phase-Outs</h4>
+      <ul style="font-size:var(--text-xs);color:var(--color-text-muted);padding-left:var(--space-4);list-style:disc;display:flex;flex-direction:column;gap:4px">
+        <li><strong>Section 45W</strong> (commercial vehicle credit) — Repealed for vehicles acquired after Sept 30, 2025</li>
+        <li><strong>Section 30C</strong> (EV infrastructure credit) — Repealing June 30, 2026. Act now.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-2)">DOE Renamed: Office of Energy Dominance Financing</h4>
+      <p style="font-size:var(--text-xs);color:var(--color-text-muted)">The DOE Loan Programs Office has been administratively renamed. $400B+ in loan guarantee authority remains active. Rolling applications at <a href="https://www.energy.gov/lpo" target="_blank" rel="noopener noreferrer">energy.gov/lpo</a>.</p>
+    </div>
+    <div class="card">
+      <h4 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-2)">Governor Ferguson EO 25-11</h4>
+      <p style="font-size:var(--text-xs);color:var(--color-text-muted)">Directs 7 cabinet agencies to prioritize clean energy permits. Creates Joint Clean Energy Acceleration Team. Orders UTC to expedite RFP reviews. Commerce to speed up grant awards for projects facing expiring tax credits.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== INVESTORS PAGE ====== -->
+<div class="page" id="page-investors">
+  <div class="section-header"><div><div class="section-title">Investor Explorer</div><div class="section-subtitle">26 climate-focused investors profiled · Angels, VCs, CVCs, Government, Nonprofits · $10B+ combined AUM</div></div></div>
+  <div class="filter-bar" id="investor-filters" style="margin-bottom:var(--space-4)"></div>
+  <div class="card-grid" id="investor-grid"></div>
+</div>
+
+<!-- ====== MEMBERS PAGE ====== -->
+<div class="page" id="page-members">
+  <div class="section-header"><div><div class="section-title">Member Directory</div><div class="section-subtitle">9Zero Seattle Climate Innovation Hub ecosystem</div></div></div>
+  <div class="filter-bar" style="margin-bottom:var(--space-4)">
+    <button class="chip active" onclick="filterMembers('all',this)">All</button>
+    <button class="chip" onclick="filterMembers('Energy',this)">Energy</button>
+    <button class="chip" onclick="filterMembers('Software',this)">Software</button>
+    <button class="chip" onclick="filterMembers('Hardware',this)">Hardware</button>
+    <button class="chip" onclick="filterMembers('Materials',this)">Materials</button>
+    <button class="chip" onclick="filterMembers('Mobility',this)">Mobility</button>
+    <button class="chip" onclick="filterMembers('Incubator',this)">Incubators</button>
+    <button class="chip" onclick="filterMembers('Fund',this)">Funds</button>
+  </div>
+  <div class="card-grid" id="members-grid"></div>
+</div>
+
+<!-- ====== EVENTS PAGE ====== -->
+<div class="page" id="page-events">
+  <div class="section-header"><div><div class="section-title">Events Calendar</div><div class="section-subtitle">Upcoming climate tech events in the Pacific Northwest</div></div></div>
+  <div id="events-list" style="display:flex;flex-direction:column;gap:var(--space-4)"></div>
+</div>
+
+<!-- ====== ECOSYSTEM MAP PAGE ====== -->
+<div class="page" id="page-ecosystem">
+  <div class="section-header"><div><div class="section-title">Ecosystem Network</div><div class="section-subtitle">Interactive map of the Seattle Climate Innovation Hub ecosystem</div></div></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="ecosystem-graph"></div>
+  </div>
+  <div class="card-grid" id="ecosystem-legend"></div>
+</div>
+
+<!-- ====== CARBON CALCULATOR PAGE ====== -->
+<div class="page" id="page-calculator">
+  <div class="section-header"><div><div class="section-title">Carbon Impact Calculator</div><div class="section-subtitle">Estimate your project's carbon reduction potential</div></div></div>
+  <div class="card">
+    <div class="calc-grid">
+      <div class="calc-input-group">
+        <label>Project Type</label>
+        <select id="calc-type" onchange="updateCalc()">
+          <option value="solar">Solar Installation</option>
+          <option value="heatpump">Heat Pump Retrofit</option>
+          <option value="ev-fleet">EV Fleet Conversion</option>
+          <option value="ev-charging">EV Charging Station</option>
+          <option value="storage">Battery Storage</option>
+          <option value="weatherization">Building Weatherization</option>
+        </select>
+      </div>
+      <div class="calc-input-group">
+        <label>Scale (kW / units / sqft)</label>
+        <input type="number" id="calc-scale" value="100" min="1" onchange="updateCalc()" oninput="updateCalc()">
+      </div>
+      <div class="calc-input-group">
+        <label>Location</label>
+        <select id="calc-location" onchange="updateCalc()">
+          <option value="seattle">Seattle (SCL Grid)</option>
+          <option value="pse">PSE Service Area</option>
+          <option value="wa-avg">WA State Average</option>
+        </select>
+      </div>
+      <div class="calc-input-group">
+        <label>Project Lifetime (years)</label>
+        <input type="number" id="calc-years" value="25" min="1" max="50" onchange="updateCalc()" oninput="updateCalc()">
+      </div>
+    </div>
+    <div class="calc-result" id="calc-result">
+      <div class="calc-result-value" id="calc-co2">—</div>
+      <div class="calc-result-label">Estimated Lifetime CO₂ Reduction (metric tons)</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4);margin-top:var(--space-4)">
+      <div class="kpi-card"><div class="kpi-label">Equivalent Trees</div><div class="kpi-value accent" id="calc-trees">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Cars Off Road</div><div class="kpi-value" id="calc-cars">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Homes Powered</div><div class="kpi-value" id="calc-homes">—</div></div>
+    </div>
+  </div>
+  <div class="chart-card" style="margin-top:var(--space-4)">
+    <div class="chart-title">Annual Carbon Reduction Over Project Lifetime</div>
+    <div class="chart-container"><canvas id="chart-carbon"></canvas></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ================================================================
+// DATA
+// ================================================================
+const GRANTS = [
+  { name: "Clean Energy Fund RD&D", funder: "WA Commerce (CEF)", amount: "$5M", deadline: "TBD (solicitation opened early 2026)", status: "Open", sectors: ["Hardware","Software","Energy","Materials"], match: 95, url: "https://www.commerce.wa.gov/epic/rdd/" },
+  { name: "Clean Energy Grants (2025-2027)", funder: "WA Commerce (EPIC)", amount: "$32M total", deadline: "Closed (next cycle ~2027)", status: "Closed", sectors: ["Energy","Hardware"], match: 70, url: "https://www.commerce.wa.gov/epic/clean-energy-grants/" },
+  { name: "CETCAP (IRA Tax Credits)", funder: "WA Commerce / IRS", amount: "30-70% of project costs", deadline: "Ongoing", status: "Open", sectors: ["Energy","Hardware","Software"], match: 90, url: "https://www.commerce.wa.gov/federal-energy-funding/cetcap/" },
+  { name: "Community EV Charger Grants", funder: "WA Commerce", amount: "Up to $110K/connector", deadline: "Rolling", status: "Rolling", sectors: ["Hardware","EV","Software"], match: 80, url: "https://www.commerce.wa.gov/growing-the-economy/energy/clean-transportation/ev-charging-program/" },
+  { name: "NEVI Formula Program", funder: "WSDOT (Federal)", amount: "~$71M over 5 years", deadline: "Ongoing", status: "Rolling", sectors: ["Hardware","EV","Software"], match: 75, url: "https://www.fhwa.dot.gov/bipartisan-infrastructure-law/nevi_formula_program.cfm" },
+  { name: "Green Transportation Capital", funder: "WSDOT", amount: "Varies", deadline: "Rolling", status: "Rolling", sectors: ["Hardware","EV","Energy"], match: 65, url: "https://wsdot.wa.gov/business-wsdot/grants/green-transportation-capital-grants" },
+  { name: "ZEV Carshare Grant (ZAP)", funder: "WSDOT", amount: "$50K-$200K", deadline: "Next round ~spring 2027", status: "Closed", sectors: ["EV","Software","Energy"], match: 55, url: "https://wsdot.wa.gov/business-wsdot/grants/zero-emission-vehicle-grants/zero-emissions-access-program-grant" },
+  { name: "EPA CPRG (King County)", funder: "EPA → King County", amount: "$50M total", deadline: "Through 2029", status: "Open", sectors: ["Hardware","Software","Energy"], match: 85, url: "https://kingcounty.gov/en/dept/executive/governance-leadership/climate-office" },
+  { name: "DOE GRIP Program", funder: "DOE", amount: "Up to hundreds of millions", deadline: "Monitor", status: "Monitoring", sectors: ["Software","Hardware","Energy"], match: 70, url: "https://www.energy.gov/gdo/grid-resilience-and-innovation-partnerships-grip-program" },
+  { name: "DOE Energy Dominance Financing", funder: "DOE (fmr. LPO)", amount: "$400B+ authority", deadline: "Rolling", status: "Open", sectors: ["Hardware","Materials","Energy"], match: 60, url: "https://www.energy.gov/lpo" },
+  { name: "Diesel Emission Reduction (VW)", funder: "WA Ecology", amount: "Up to $3.5M", deadline: "Monitor next cycle", status: "Monitoring", sectors: ["Hardware","EV","Energy"], match: 50, url: "https://ecology.wa.gov/about-us/payments-contracts-grants/grants-loans/find-a-grant-or-loan/volkswagen-enforcement-action-grants" },
+  { name: "Industrial Symbiosis TA", funder: "WA Commerce (CCA)", amount: "$2.4M", deadline: "Mar 9, 2026", status: "Closed", sectors: ["Materials","Energy","Software"], match: 40, url: "https://www.commerce.wa.gov/funding/industrial-symbiosis-technical-assistance/" },
+  { name: "WAZIP Clean Truck Vouchers", funder: "WA Ecology", amount: "$112M total", deadline: "Launches April 2026", status: "Open", sectors: ["EV","Hardware","Energy"], match: 75, url: "https://ecology.wa.gov" },
+  { name: "Zero-Emission School Bus Grants", funder: "WA Ecology", amount: "$15M", deadline: "Apr 23, 2026", status: "Open", sectors: ["EV","Hardware"], match: 60, url: "https://ecology.wa.gov" },
+  { name: "CPRG Energize Spaces", funder: "King County (EPA)", amount: "Up to $200K/project", deadline: "Apr 20, 2026", status: "Open", sectors: ["Hardware","Energy","Software"], match: 80, url: "https://kingcounty.gov/en/dept/executive/governance-leadership/climate-office" },
+];
+
+const RFPS = [
+  { name: "2026 Utility-Scale Clean Energy RFP", org: "Puget Sound Energy", value: "~1,500+ MW", deadline: "Apr 10, 2026", status: "Open", sectors: ["Energy","Software","Hardware","Materials"], url: "https://www.pse.com/en/pages/energy-supply/acquiring-energy/2026-Voluntary-Utility-Scale-RFP" },
+  { name: "Building Decarbonization Grant", org: "King County (EPA CPRG)", value: "$7M total pool", deadline: "Apr 6, 2026", status: "Open", sectors: ["Software","Hardware","Energy","Materials"], url: "https://kingcounty.gov/en/dept/dnrp/buildings-property/green-sustainable-building/building-decarbonization/grants-for-government-buildings" },
+  { name: "Energy Compliance & Decarb IDIQ", org: "Port of Seattle", value: "$2M-$3M/contract", deadline: "Q1 2026", status: "Upcoming", sectors: ["Software","Energy","Hardware"], url: "https://www.portseattle.org/business/bid-opportunities" },
+  { name: "Clean Ports Community Capacity", org: "Port of Seattle", value: "$150K-$200K", deadline: "Q1 2026", status: "Upcoming", sectors: ["Software","Energy"], url: "https://www.portseattle.org/business/bid-opportunities" },
+  { name: "Fleet Fast EV Charging", org: "Port of Seattle", value: "$10M-$12M", deadline: "Q1 2028", status: "Upcoming", sectors: ["Hardware","EV","Energy","Software"], url: "https://www.portseattle.org/business/bid-opportunities" },
+  { name: "Industrial Symbiosis TA RFP", org: "WA Dept. of Commerce", value: "$2.4M", deadline: "Mar 9, 2026", status: "Closed", sectors: ["Materials","Energy","Software"], url: "https://www.commerce.wa.gov/funding/industrial-symbiosis-technical-assistance/" },
+  { name: "2026-2029 Community Solar", org: "Seattle City Light", value: "~$14.8M", deadline: "2026-2028 construction", status: "Design Phase", sectors: ["Energy","Hardware","Software"], url: "https://www.seattle.gov/city-light/residential-services/home-energy-solutions/solar-power" },
+  { name: "Public Charging Incentive", org: "Seattle City Light", value: "Up to $280K/site", deadline: "Rolling", status: "Open", sectors: ["Hardware","EV","Software","Energy"], url: "https://www.seattle.gov/city-light/energy/electrification/transportation-electrification/public-charging-incentive" },
+];
+
+const BILLS = [
+  { id: "SB 6355", name: "Transmission Authority", status: "Passed", desc: "Creates WA Electricity Transmission Authority. 20-year needs assessment, debt financing for new transmission lines. Signed by Governor Ferguson.", impact: "High", category: "Grid" },
+  { id: "SB 5982", name: "CETA Data Center Loophole Closure", status: "Passed", desc: "Closes loophole allowing data centers to circumvent Clean Energy Transformation Act requirements. Strengthens utility clean energy mandates.", impact: "High", category: "Energy" },
+  { id: "HB 1903", name: "Energy Assistance", status: "Passed — Awaiting Signature", desc: "Expands energy assistance programs for low-income households. Passed both chambers, awaiting Governor's signature.", impact: "Medium", category: "Equity" },
+  { id: "HB 1237", name: "EFSEC Reform", status: "Passed", desc: "Timely/predictable recommendations; clearer approval standards for large clean energy projects. Signed into law.", impact: "Medium", category: "Siting" },
+  { id: "HB 2509", name: "Efficient EFSEC Reviews", status: "Passed", desc: "Streamlined environmental documentation for clean energy siting. Companion to HB 1237.", impact: "Medium", category: "Siting" },
+  { id: "E2SHB 2515", name: "Data Center Clean Energy", status: "Failed", desc: "Would have required new ELEUFs to use 80%+ clean energy by 2030 and prohibited free CCA allowances. Did not pass the full legislature.", impact: "High", category: "Energy" },
+  { id: "SB 5466", name: "Transmission Authority (Original)", status: "Stalled", desc: "Earlier version of transmission authority legislation. Superseded by SB 6355 which passed instead.", impact: "Low", category: "Grid" },
+  { id: "HB 1328", name: "Clean Energy Development Office", status: "Failed", desc: "Would have created centralized state support for clean energy project siting within Commerce. Did not advance.", impact: "Medium", category: "Siting" },
+  { id: "SB 5208", name: "New Clean Energy Fund", status: "Dead", desc: "Would have created additional funding streams for clean energy deployment. Did not advance in 2026 session.", impact: "Medium", category: "Funding" },
+  { id: "SB 5821", name: "Nuclear Energy Support", status: "Dead", desc: "Proposed support for nuclear energy development in Washington. Did not advance.", impact: "Low", category: "Energy" },
+  { id: "Budget", name: "CCA Revenue Diversion", status: "Passed", desc: "Legislature diverted ~$540M from CCA revenue to fill general fund budget gaps. Reduces climate investment accounts.", impact: "High", category: "Funding" },
+];
+
+const INVESTORS = [
+  { name: "E8 Angels", type: "Angel Network", hq: "Seattle, WA", focus: "All cleantech", check: "$25K-$500K", aum: "$67M+ deployed", connection: "SCIH events co-presenter", url: "https://www.e8angels.com", sectors: ["Energy","Hardware","Materials","Software"] },
+  { name: "Stepchange Ventures", type: "Seed VC", hq: "Seattle, WA", focus: "Climate software", check: "$100K-$200K", aum: "$3M Fund I", connection: "Ben Eidelson is 9Zero member", url: "https://www.stepchangeventures.com", sectors: ["Software","Energy"] },
+  { name: "VertueLab Climate Impact Fund", type: "Nonprofit Fund", hq: "Seattle/Portland", focus: "Early cleantech, equity", check: "$50K-$400K", aum: "$9.5M+ deployed", connection: "SCIH founding partner", url: "https://www.vertuelab.org", sectors: ["Energy","Hardware","Software","Materials"] },
+  { name: "WA State Green Bank", type: "Government", hq: "Seattle, WA", focus: "Clean energy financing", check: "Project-based loans", aum: "Growing", connection: "Eli Lieberman is 9Zero member", url: "#", sectors: ["Energy","Hardware"] },
+  { name: "Climate Pledge Fund", type: "Corporate VC", hq: "Seattle, WA", focus: "All climate sectors", check: "$5M-$100M+", aum: "$2B committed", connection: "Amazon HQ Seattle", url: "https://fund.theclimatepledge.com", sectors: ["Energy","Hardware","Materials","Software","EV"] },
+  { name: "Microsoft Climate Innovation Fund", type: "Corporate VC", hq: "Redmond, WA", focus: "Carbon, water, waste", check: "Undisclosed", aum: "$1B fund", connection: "E8 sponsor, PNW presence", url: "https://www.microsoft.com/en-us/corporate-responsibility/sustainability/climate-innovation-fund", sectors: ["Software","Energy","Materials","Hardware"] },
+  { name: "Breakthrough Energy Ventures", type: "Series A-C VC", hq: "Kirkland, WA", focus: "Deep tech, hard-to-abate", check: "$10M-$100M+", aum: "$3.5B+", connection: "Seattle-area HQ", url: "https://www.b-t.energy/ventures/", sectors: ["Energy","Hardware","Materials"] },
+  { name: "Congruent Ventures", type: "Seed-Series A VC", hq: "San Francisco, CA", focus: "Full-stack climate", check: "$1M-$10M", aum: "~$600M", connection: "Active PNW dealflow", url: "https://www.congruentvc.com", sectors: ["Energy","Software","Materials"] },
+  { name: "Clean Energy Ventures", type: "Seed-Series A VC", hq: "Boston, MA", focus: "Clean energy hardware", check: "$500K-$5M", aum: "~$110M", connection: "E8 Angels partner", url: "https://cleanenergyventures.com", sectors: ["Energy","Hardware"] },
+  { name: "SE Ventures (Schneider Electric)", type: "Corporate VC", hq: "Menlo Park, CA", focus: "Electrification, industrial", check: "$500K-$20M+", aum: "€1B+", connection: "Global PNW presence", url: "https://www.seventures.com", sectors: ["Hardware","Software","Energy"] },
+  { name: "Prelude Ventures", type: "Seed-Series B VC", hq: "San Francisco, CA", focus: "Climate mitigation", check: "$1M-$15M", aum: "Multi-fund", connection: "PNW portfolio history", url: "https://www.preludeventures.com", sectors: ["Energy","Software","Materials","Hardware"] },
+  { name: "Elemental Impact", type: "Nonprofit Fund", hq: "Honolulu/SF", focus: "Community-impact climate", check: "Up to $3M", aum: "$79M+ deployed", connection: "PNW portfolio", url: "https://elementalimpact.com", sectors: ["Energy","Software","Hardware"] },
+  { name: "Earth Finance", type: "Advisory/Seed", hq: "Seattle, WA", focus: "Climate strategy", check: "Seed-stage", aum: "$14M raised", connection: "Reuven Carlyle, ex-WA senator", url: "https://www.earthfinance.com", sectors: ["Energy","Software"] },
+  { name: "Russell Family Foundation", type: "Family Office", hq: "Gig Harbor, WA", focus: "Decarb, nature, forestry", check: "$250K-$19M", aum: "~$100M deployed", connection: "Funds VertueLab", url: "https://trff.org", sectors: ["Energy","Materials"] },
+  { name: "Toba Capital", type: "Series A-C VC", hq: "Newport Beach, CA", focus: "Climate & energy", check: "$250K-$50M", aum: "$1.3B", connection: "Susan Su in Seattle", url: "https://tobacapital.com", sectors: ["Energy","Software","Hardware"] },
+  { name: "Voyager Ventures", type: "Seed-Series A VC", hq: "San Francisco, CA", focus: "Energy, industrials", check: "$1M-$15M", aum: "$475M", connection: "Amazon Climate Pledge co-investor", url: "https://voyagervc.com", sectors: ["Energy","Hardware","Materials","Software"] },
+  { name: "Alante Capital", type: "Seed-Series A VC", hq: "Santa Barbara, CA", focus: "Circular economy", check: "$500K-$5M", aum: "Single fund", connection: "PNW event participant", url: "https://alantecapital.com", sectors: ["Materials","Hardware"] },
+  { name: "PSL Ventures", type: "Seed VC", hq: "Seattle, WA", focus: "Broad tech, climate", check: "$500K-$5M", aum: "$100M fund", connection: "Seattle native", url: "https://psl.com", sectors: ["Software","Energy"] },
+  { name: "HASI", type: "Public Corp", hq: "Annapolis, MD", focus: "Infrastructure, renewables", check: "$5M-$500M+", aum: "$8B+ managed", connection: "Guy van Syckle is 9Zero member", url: "https://www.hasi.com", sectors: ["Energy","Hardware"] },
+  { name: "WA Commerce Clean Energy Fund", type: "Government Grant", hq: "Olympia, WA", focus: "All clean energy", check: "$50K-$3M grants", aum: "$150M+ since 2013", connection: "State program", url: "https://www.commerce.wa.gov/funding/apply-now-for-clean-energy-grants/", sectors: ["Energy","Hardware","Software","Materials"] },
+  { name: "UW CEI / Clean Energy Testbeds", type: "University", hq: "Seattle, WA", focus: "Solar, batteries, grid", check: "Research grants + access", aum: "N/A", connection: "SCIH ecosystem partner", url: "https://www.cei.washington.edu", sectors: ["Energy","Hardware","Materials"] },
+  { name: "UW CoMotion Labs", type: "University Incubator", hq: "Seattle, WA", focus: "Pre-seed climate tech", check: "Non-dilutive + network", aum: "N/A", connection: "SCIH founding partner", url: "https://comotion.uw.edu", sectors: ["Energy","Hardware","Software","Materials"] },
+  { name: "CleanTech Alliance", type: "Industry Network", hq: "Seattle, WA", focus: "All cleantech", check: "Network/events", aum: "1,100 members", connection: "PNW ecosystem", url: "https://www.cleantechalliance.org", sectors: ["Energy","Hardware","Software","Materials"] },
+  { name: "Washington Research Foundation", type: "University Fund", hq: "Seattle, WA", focus: "UW spinout commercialization", check: "$250K-$3M", aum: "Multi-fund", connection: "WA innovations", url: "https://www.wrfseattle.org", sectors: ["Hardware","Energy","Materials"] },
+  { name: "Maritime Blue", type: "Industry Cluster", hq: "Seattle, WA", focus: "Maritime decarb", check: "Network", aum: "135+ members", connection: "PNW ecosystem", url: "https://maritimeblue.org", sectors: ["Energy","Hardware"] },
+  { name: "Alliance of Angels", type: "Angel Network", hq: "Seattle, WA", focus: "General + cleantech", check: "$250K-$1.5M", aum: "200+ members", connection: "Syndicates with E8", url: "https://www.allianceofangels.com", sectors: ["Software","Energy","Hardware"] },
+];
+
+const MEMBERS = [
+  { name: "PwrOn", sector: "Energy", desc: "Portable power P2P marketplace. 95 stations deployed, seeking $500K seed.", founder: "Darian Parrish", url: "https://pwron.co" },
+  { name: "Forge", sector: "Software", desc: "AI copilot for infrastructure project delivery. CoMotion Cohort 1.", founder: "Angelo Liao", url: "#" },
+  { name: "Nimbus Aerospace", sector: "Mobility", desc: "Hybrid-electric 6-passenger private jet. Preparing first flight of quarter-scale aircraft.", founder: "", url: "#" },
+  { name: "Electra", sector: "Software", desc: "Product stewardship as a service — tracks, collects, monetizes end-of-life clean energy assets.", founder: "", url: "#" },
+  { name: "Bio Fiber Industries", sector: "Materials", desc: "Converts organic waste from cannabis, hops, hemp into high-performance bio-based materials.", founder: "", url: "#" },
+  { name: "ZILA Bioworks", sector: "Materials", desc: "Plant-based resins and epoxies replacing petrochemical alternatives.", founder: "Jason Puracal", url: "#" },
+  { name: "Blue Dot Motorworks", sector: "Mobility", desc: "$6K-$9K plug-in hybrid conversion kits for any vehicle. Piloting with BC school districts.", founder: "", url: "#" },
+  { name: "YIMBY AI", sector: "Software", desc: "AI-powered platform to accelerate urban infilling — simplifies zoning/permitting for ADUs. Climate Hackathon grand prize winner.", founder: "Chris Esh", url: "#" },
+  { name: "Benchmark Star", sector: "Software", desc: "Building energy benchmarking and BEPS compliance platform. Seattle Climate Hackathon winner.", founder: "", url: "#" },
+  { name: "Capture6", sector: "Hardware", desc: "Water-positive carbon dioxide removal company. Direct air capture technology.", founder: "", url: "https://capture6.com" },
+  { name: "Einride", sector: "Mobility", desc: "Electric and autonomous transport company. Product Director is 9Zero member.", founder: "", url: "https://www.einride.tech" },
+  { name: "Verde Technologies", sector: "Energy", desc: "Climate technology company. Co-Founder & CCO is 9Zero member.", founder: "", url: "#" },
+  { name: "Circular Spring", sector: "Materials", desc: "Biochar On Site program — circular economy initiative for carbon sequestration.", founder: "", url: "#" },
+  { name: "Acclaim Climate", sector: "Software", desc: "Platform for low-carbon industrial chemicals — concrete, iron, steel. Hackathon runner-up.", founder: "", url: "#" },
+  { name: "Big Green Loop", sector: "Materials", desc: "Plant-based, carbon-negative packaging for grocery/foodservice. 'Most Climate Impact' award.", founder: "", url: "#" },
+  { name: "Global Impact Collective", sector: "Software", desc: "Strategy and UX for climate impact. Hosted Food Waste to Justice event at 9Zero.", founder: "", url: "#" },
+  { name: "VertueLab", sector: "Fund", desc: "Nonprofit climate impact fund. $9.5M+ deployed. SCIH founding partner.", founder: "Aina Mapinduzi", url: "https://www.vertuelab.org" },
+  { name: "UW CoMotion Labs", sector: "Incubator", desc: "Climate tech incubator. 8-month cohort. Cohort 2 launching April 2026. SCIH founding partner.", founder: "Ashlee Esteban", url: "https://comotion.uw.edu" },
+  { name: "E8 Angels", sector: "Fund", desc: "Largest US cleantech angel network. 130+ members, $67M+ deployed.", founder: "Karin Kidder", url: "https://www.e8angels.com" },
+  { name: "Stepchange Ventures", sector: "Fund", desc: "Climate-first seed fund. 20+ portfolio companies. Ben Eidelson calls 9Zero 'the clear physical nexus of Seattle climate tech.'", founder: "Ben Eidelson", url: "https://www.stepchangeventures.com" },
+  { name: "Bayou Energy", sector: "Software", desc: "Utility data access for clean energy installations. Stepchange portfolio.", founder: "", url: "#" },
+  { name: "Photon Marine", sector: "Hardware", desc: "Electric marine propulsion. VertueLab CIF portfolio.", founder: "", url: "#" },
+  { name: "BlueDot Photonics", sector: "Hardware", desc: "Perovskite solar technology. VertueLab + E8 co-investment.", founder: "", url: "#" },
+  { name: "Nori", sector: "Software", desc: "Carbon removal marketplace. $7M Series A. Seattle-based.", founder: "", url: "#" },
+  { name: "Ever.green", sector: "Software", desc: "Clean energy tax credit marketplace. PSL Ventures-backed.", founder: "", url: "#" },
+  { name: "Earth Finance", sector: "Fund", desc: "Climate strategy & financing advisory. Acquired Climate Engine/SpatiaFi in 2025.", founder: "Reuven Carlyle", url: "https://www.earthfinance.com" },
+  { name: "WA State Green Bank", sector: "Fund", desc: "State green bank leveraging public + private capital. Eli Lieberman calls 9Zero 'invaluable for climate finance networking.'", founder: "Eli Lieberman", url: "#" },
+  { name: "Thresh Power", sector: "Software", desc: "AI stack for clean energy developers. Energy Generation Cluster Ambassador at 9Zero.", founder: "Mark Grozen-Smith", url: "#" },
+  { name: "Rubbish", sector: "Software", desc: "AI-powered waste characterization platform. 9Zero member spotlight.", founder: "Emin Israfil", url: "#" },
+  { name: "Wherobots", sector: "Software", desc: "Spatial Intelligence Cloud for geospatial analytics. Active 9Zero member.", founder: "Ben Pruden", url: "#" },
+  { name: "SN\u00D8CAP", sector: "Fund", desc: "Climate VC fund focused on early-stage climate investments. 9Zero member.", founder: "Jonathan Azoff", url: "#" },
+  { name: "Rizoma", sector: "Fund", desc: "Boutique climate M&A advisory firm. 9Zero member.", founder: "Claire Veuthey", url: "#" },
+  { name: "Climeworks", sector: "Hardware", desc: "Global DAC pioneer. Direct air capture at scale. 9Zero member presence.", founder: "Marco Hartmann", url: "https://climeworks.com" },
+  { name: "Clean Energy Leadership Inst.", sector: "Incubator", desc: "Workforce development for the clean energy transition. 9Zero member.", founder: "Esther Morales", url: "#" },
+];
+
+const EVENTS = [
+  { name: "UW CoMotion Cohort 2 Kickoff", date: "2026-04-02", location: "Seattle Climate Innovation Hub", url: "https://comotion.uw.edu", desc: "8 new climate tech teams begin the incubator program. Confirmed via Luma event.", type: "milestone" },
+  { name: "DOE SPARK Concept Papers Due", date: "2026-04-02", location: "Online (grants.gov)", url: "https://www.energy.gov", desc: "$1.9B DOE program for clean energy innovation. Concept papers due.", type: "deadline" },
+  { name: "King County Decarb Grant Deadline", date: "2026-04-06", location: "Online Submission", url: "https://kingcounty.gov/en/dept/dnrp/buildings-property/green-sustainable-building/building-decarbonization/grants-for-government-buildings", desc: "Full applications due for $7M building decarbonization grants.", type: "deadline" },
+  { name: "CleanTech Alliance Data Center Lunch", date: "2026-04-08", location: "Seattle", url: "https://www.cleantechalliance.org", desc: "Industry lunch on data center energy policy and WA legislative outcomes.", type: "event" },
+  { name: "PSE RFP Bids Due", date: "2026-04-10", location: "Puget Sound Energy", url: "https://www.pse.com/en/pages/energy-supply/acquiring-energy/2026-Voluntary-Utility-Scale-RFP", desc: "Bids due for 2026 Voluntary Utility-Scale Clean Energy RFP. 1,556 MW deficit + 2.9M MWh needed.", type: "deadline" },
+  { name: "Living Future Conference", date: "2026-04-14", location: "Seattle", url: "https://living-future.org", desc: "Annual conference on regenerative design, buildings, and the built environment. 4 days.", type: "event" },
+  { name: "Port of Seattle Energy IDIQ Due", date: "2026-04-17", location: "Port of Seattle", url: "https://www.portseattle.org/business/bid-opportunities", desc: "Energy Compliance & Decarbonization IDIQ responses due. $2M-$3M per contract.", type: "deadline" },
+  { name: "King County CPRG Energize Spaces Due", date: "2026-04-20", location: "Online Submission", url: "https://kingcounty.gov/en/dept/executive/governance-leadership/climate-office", desc: "Community building decarbonization program applications due.", type: "deadline" },
+  { name: "WA Ecology Zero Emission School Bus", date: "2026-04-23", location: "Online", url: "https://ecology.wa.gov", desc: "$15M in grants for zero-emission school buses. Applications due.", type: "deadline" },
+  { name: "E8 Angels Decarbon8 Applications Open", date: "2026-05-01", location: "Seattle", url: "https://www.e8angels.com", desc: "Decarbon8-US philanthropic impact fund opens applications for 2026 cohort.", type: "milestone" },
+  { name: "CCA-CA-QC Linkage Comment Deadline", date: "2026-05-01", location: "Online", url: "https://ecology.wa.gov/air-climate/climate-commitment-act", desc: "Public comment deadline on draft WA-CA-Quebec carbon market linkage agreement.", type: "deadline" },
+  { name: "PNW Climate Week 2026", date: "2026-07-13", location: "Seattle + 10+ cities", url: "https://pnwclimateweek.org", desc: "The only regional climate week in North America. July 13-19. 220+ events expected. Registration opens soon.", type: "event" },
+  { name: "Seattle Tech Week", date: "2026-07-27", location: "Seattle", url: "#", desc: "July 27-31. Event submissions open April 9. Climate tech track expected.", type: "event" },
+  { name: "WA Fusion Week", date: "2026-08-31", location: "Seattle", url: "#", desc: "Aug 31 - Sept 3. Celebrating WA state's fusion energy leadership.", type: "event" },
+  { name: "CleanTech Innovation Showcase", date: "2026-09-03", location: "Seattle", url: "https://www.cleantechalliance.org", desc: "Annual CleanTech Alliance showcase of Pacific Northwest innovations.", type: "event" },
+  { name: "CoMotion Cohort 2 Demo Day", date: "2026-09-15", location: "Seattle Climate Innovation Hub", url: "https://comotion.uw.edu", desc: "Cohort 2 companies present to investors and ecosystem partners.", type: "milestone" },
+  { name: "BEPS First Reporting (>220K SF)", date: "2027-10-01", location: "Seattle", url: "https://www.seattle.gov/environment/climate-change/buildings-and-energy/building-energy-performance", desc: "Largest buildings must verify and report GHG benchmarking.", type: "compliance" },
+];
+
+const ECOSYSTEM_NODES = [
+  { id: "9zero", label: "9Zero Hub", group: "hub", size: 20 },
+  { id: "uw-comotion", label: "UW CoMotion", group: "institution", size: 14 },
+  { id: "vertuelab", label: "VertueLab", group: "fund", size: 14 },
+  { id: "seattle-oed", label: "Seattle OED", group: "government", size: 12 },
+  { id: "e8", label: "E8 Angels", group: "fund", size: 12 },
+  { id: "stepchange", label: "Stepchange", group: "fund", size: 10 },
+  { id: "cleantech-alliance", label: "CleanTech Alliance", group: "institution", size: 12 },
+  { id: "uw-cei", label: "UW CEI", group: "institution", size: 11 },
+  { id: "pwron", label: "PwrOn", group: "startup", size: 8 },
+  { id: "forge", label: "Forge", group: "startup", size: 8 },
+  { id: "nimbus", label: "Nimbus Aerospace", group: "startup", size: 8 },
+  { id: "zila", label: "ZILA Bioworks", group: "startup", size: 8 },
+  { id: "biofib", label: "Bio Fiber", group: "startup", size: 8 },
+  { id: "electra", label: "Electra", group: "startup", size: 8 },
+  { id: "bluedot", label: "Blue Dot MW", group: "startup", size: 8 },
+  { id: "photon", label: "Photon Marine", group: "startup", size: 7 },
+  { id: "bluedotph", label: "BlueDot Photonics", group: "startup", size: 7 },
+  { id: "nori", label: "Nori", group: "startup", size: 7 },
+  { id: "bayou", label: "Bayou Energy", group: "startup", size: 7 },
+  { id: "evergreen", label: "Ever.green", group: "startup", size: 7 },
+  { id: "amazon-cpf", label: "Climate Pledge Fund", group: "fund", size: 14 },
+  { id: "microsoft-cif", label: "Microsoft CIF", group: "fund", size: 13 },
+  { id: "bev", label: "Breakthrough Energy", group: "fund", size: 14 },
+  { id: "wa-greenbank", label: "WA Green Bank", group: "government", size: 10 },
+  { id: "pnw-cw", label: "PNW Climate Week", group: "event", size: 10 },
+  { id: "wa-commerce", label: "WA Commerce", group: "government", size: 12 },
+  { id: "earth-finance", label: "Earth Finance", group: "fund", size: 9 },
+  { id: "russell", label: "Russell Family Fdn", group: "fund", size: 10 },
+  { id: "hasi", label: "HASI", group: "fund", size: 10 },
+  { id: "maritime-blue", label: "Maritime Blue", group: "institution", size: 9 },
+  { id: "capture6", label: "Capture6", group: "startup", size: 8 },
+  { id: "yimby", label: "YIMBY AI", group: "startup", size: 8 },
+  { id: "einride", label: "Einride", group: "startup", size: 8 },
+  { id: "thresh", label: "Thresh Power", group: "startup", size: 8 },
+  { id: "benchmark", label: "Benchmark Star", group: "startup", size: 7 },
+  { id: "verde", label: "Verde Tech", group: "startup", size: 7 },
+  { id: "snocap", label: "SN\u00D8CAP", group: "fund", size: 9 },
+  { id: "toba", label: "Toba Capital", group: "fund", size: 10 },
+  { id: "congruent", label: "Congruent", group: "fund", size: 9 },
+  { id: "psl", label: "PSL Ventures", group: "fund", size: 9 },
+  { id: "wa-ecology", label: "WA Ecology", group: "government", size: 10 },
+];
+
+const ECOSYSTEM_LINKS = [
+  { source: "9zero", target: "uw-comotion" }, { source: "9zero", target: "vertuelab" },
+  { source: "9zero", target: "seattle-oed" }, { source: "9zero", target: "e8" },
+  { source: "9zero", target: "stepchange" }, { source: "9zero", target: "wa-greenbank" },
+  { source: "9zero", target: "hasi" }, { source: "9zero", target: "pnw-cw" },
+  { source: "uw-comotion", target: "forge" }, { source: "uw-comotion", target: "nimbus" },
+  { source: "uw-comotion", target: "zila" }, { source: "uw-comotion", target: "biofib" },
+  { source: "uw-comotion", target: "electra" }, { source: "uw-comotion", target: "bluedot" },
+  { source: "uw-comotion", target: "uw-cei" }, { source: "uw-comotion", target: "pnw-cw" },
+  { source: "vertuelab", target: "photon" }, { source: "vertuelab", target: "bluedotph" },
+  { source: "vertuelab", target: "cleantech-alliance" }, { source: "vertuelab", target: "russell" },
+  { source: "e8", target: "uw-cei" }, { source: "e8", target: "cleantech-alliance" },
+  { source: "stepchange", target: "bayou" }, { source: "9zero", target: "pwron" },
+  { source: "amazon-cpf", target: "9zero" }, { source: "microsoft-cif", target: "uw-cei" },
+  { source: "bev", target: "uw-cei" }, { source: "wa-commerce", target: "9zero" },
+  { source: "wa-commerce", target: "wa-greenbank" }, { source: "earth-finance", target: "9zero" },
+  { source: "nori", target: "9zero" }, { source: "evergreen", target: "9zero" },
+  { source: "maritime-blue", target: "9zero" }, { source: "cleantech-alliance", target: "9zero" },
+  { source: "forge", target: "pnw-cw" }, { source: "e8", target: "vertuelab" },
+  { source: "9zero", target: "capture6" }, { source: "9zero", target: "yimby" },
+  { source: "9zero", target: "einride" }, { source: "9zero", target: "thresh" },
+  { source: "9zero", target: "benchmark" }, { source: "9zero", target: "verde" },
+  { source: "9zero", target: "snocap" }, { source: "toba", target: "9zero" },
+  { source: "congruent", target: "9zero" }, { source: "psl", target: "evergreen" },
+  { source: "wa-ecology", target: "wa-commerce" }, { source: "wa-ecology", target: "9zero" },
+];
+
+// ================================================================
+// RENDERING
+// ================================================================
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' }) + ' · ' + now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+}
+setInterval(updateClock, 30000); updateClock();
+
+// PNW Countdown
+function updatePNWCountdown() {
+  const target = new Date('2026-07-13T00:00:00');
+  const now = new Date();
+  const diff = target - now;
+  if (diff <= 0) { document.getElementById('pnw-countdown').innerHTML = '<span style="color:var(--color-accent-bright);font-weight:700">Happening Now!</span>'; return; }
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  document.getElementById('pnw-countdown').innerHTML = `
+    <div class="countdown-unit"><div class="countdown-num">${days}</div><div class="countdown-label">Days</div></div>
+    <div class="countdown-unit"><div class="countdown-num">${hours}</div><div class="countdown-label">Hours</div></div>
+    <div class="countdown-unit"><div class="countdown-num">${mins}</div><div class="countdown-label">Min</div></div>`;
+  document.getElementById('pnw-days-out').textContent = `${days}d`;
+}
+setInterval(updatePNWCountdown, 60000); updatePNWCountdown();
+
+// Dashboard - Urgent Deadlines
+function renderUrgentDeadlines() {
+  const now = new Date();
+  const deadlines = [...RFPS.filter(r => r.status === 'Open'), ...GRANTS.filter(g => g.status === 'Open')]
+    .map(item => {
+      const d = parseDeadlineDate(item.deadline);
+      return { ...item, deadlineDate: d, daysLeft: d ? Math.ceil((d - now) / 86400000) : null, orgOrFunder: item.org || item.funder };
+    })
+    .filter(item => item.daysLeft !== null && item.daysLeft > 0)
+    .sort((a, b) => (a.daysLeft || 999) - (b.daysLeft || 999))
+    .slice(0, 6);
+
+  document.getElementById('urgent-deadlines-body').innerHTML = deadlines.map(d => `
+    <tr>
+      <td><a href="${d.url}" target="_blank" rel="noopener noreferrer" style="font-weight:600">${d.name}</a></td>
+      <td>${d.orgOrFunder}</td>
+      <td style="white-space:nowrap">${d.deadline}</td>
+      <td>${d.value || d.amount}</td>
+      <td><span class="badge badge-open">Open</span></td>
+      <td style="font-weight:700;color:${d.daysLeft <= 7 ? 'var(--color-error)' : d.daysLeft <= 30 ? 'var(--color-warning)' : 'var(--color-success)'}">${d.daysLeft}d</td>
+    </tr>`).join('');
+}
+
+function parseDeadlineDate(str) {
+  if (!str) return null;
+  const m = str.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d+),?\s*(\d{4})/i);
+  if (m) return new Date(`${m[1]} ${m[2]}, ${m[3]}`);
+  const m2 = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (m2) return new Date(m2[0]);
+  return null;
+}
+
+// Dashboard - Events list
+function renderDashboardEvents() {
+  const now = new Date();
+  const upcoming = EVENTS.filter(e => new Date(e.date) > now).sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
+  document.getElementById('dashboard-events-list').innerHTML = upcoming.map(e => {
+    const d = new Date(e.date);
+    const diff = Math.ceil((d - now) / 86400000);
+    const typeColors = { deadline: 'var(--color-error)', event: 'var(--color-accent-bright)', milestone: 'var(--color-success)', compliance: 'var(--color-warning)' };
+    return `<div style="display:flex;gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider)">
+      <div style="width:4px;border-radius:2px;background:${typeColors[e.type] || 'var(--color-accent)'}"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:var(--text-sm);font-weight:600"><a href="${e.url}" target="_blank" rel="noopener noreferrer">${e.name}</a></div>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted)">${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})} · ${e.location}</div>
+      </div>
+      <div style="font-size:var(--text-xs);font-weight:700;color:${diff<=7?'var(--color-error)':diff<=30?'var(--color-warning)':'var(--color-text-faint)'};white-space:nowrap">${diff}d</div>
+    </div>`;
+  }).join('');
+}
+
+// Grants table
+function renderGrants(filter = {}) {
+  let filtered = GRANTS;
+  if (filter.search) filtered = filtered.filter(g => (g.name + g.funder + g.sectors.join(' ')).toLowerCase().includes(filter.search.toLowerCase()));
+  if (filter.sector) filtered = filtered.filter(g => g.sectors.includes(filter.sector));
+  if (filter.status) filtered = filtered.filter(g => g.status === filter.status);
+  filtered.sort((a, b) => b.match - a.match);
+
+  document.getElementById('grants-body').innerHTML = filtered.map(g => `
+    <tr>
+      <td><a href="${g.url}" target="_blank" rel="noopener noreferrer" style="font-weight:600">${g.name}</a></td>
+      <td style="white-space:nowrap">${g.funder}</td>
+      <td style="font-weight:600;white-space:nowrap">${g.amount}</td>
+      <td style="white-space:nowrap;font-size:var(--text-xs)">${g.deadline}</td>
+      <td><span class="badge badge-${g.status === 'Open' ? 'open' : g.status === 'Rolling' ? 'coming' : g.status === 'Monitoring' ? 'coming' : 'closed'}">${g.status}</span></td>
+      <td style="font-size:var(--text-xs)">${g.sectors.map(s => `<span class="badge badge-sector" style="margin-right:2px">${s}</span>`).join('')}</td>
+      <td><div class="score-bar"><div class="score-fill-bg"><div class="score-fill" style="width:${g.match}%"></div></div><span class="score-num">${g.match}</span></div></td>
+    </tr>`).join('');
+}
+
+// RFPs table
+function renderRFPs(filter = {}) {
+  let filtered = RFPS;
+  if (filter.search) filtered = filtered.filter(r => (r.name + r.org).toLowerCase().includes(filter.search.toLowerCase()));
+  if (filter.status) filtered = filtered.filter(r => r.status === filter.status);
+
+  document.getElementById('rfps-body').innerHTML = filtered.map(r => `
+    <tr>
+      <td><a href="${r.url}" target="_blank" rel="noopener noreferrer" style="font-weight:600">${r.name}</a></td>
+      <td style="white-space:nowrap">${r.org}</td>
+      <td style="font-weight:600;white-space:nowrap">${r.value}</td>
+      <td style="white-space:nowrap">${r.deadline}</td>
+      <td><span class="badge badge-${r.status === 'Open' ? 'open' : r.status === 'Upcoming' ? 'coming' : r.status === 'Design Phase' ? 'coming' : 'closed'}">${r.status}</span></td>
+      <td style="font-size:var(--text-xs)">${r.sectors.map(s => `<span class="badge badge-sector" style="margin-right:2px">${s}</span>`).join('')}</td>
+    </tr>`).join('');
+}
+
+// Policy - BEPS timeline
+function renderBEPSTimeline() {
+  const items = [
+    { date: "Jan 2026", title: "GHGI Targets Published", desc: "Director's Rule finalized with emissions factors for 21 building types", filled: true },
+    { date: "Oct 2027", title: "First Reporting — >220K SF buildings", desc: "~largest buildings begin GHG benchmarking verification", filled: false },
+    { date: "Oct 2028", title: "Reporting — 50K-90K SF buildings", desc: "Mid-size buildings begin reporting", filled: false },
+    { date: "Oct 2030", title: "Reporting — 20K-30K SF buildings", desc: "Smallest covered buildings begin reporting", filled: false },
+    { date: "Oct 2031", title: "First Emissions Targets", desc: "Largest buildings must meet first GHGI targets or face penalties", filled: false, warning: true },
+    { date: "2041-2050", title: "Net-Zero Deadline", desc: "All covered buildings must achieve net-zero emissions", filled: false, error: true },
+  ];
+  document.getElementById('beps-timeline').innerHTML = items.map(i => `
+    <div class="timeline-item">
+      <div class="timeline-dot ${i.filled ? 'filled' : ''} ${i.warning ? 'warning' : ''} ${i.error ? 'error' : ''}"></div>
+      <div class="timeline-date">${i.date}</div>
+      <div class="timeline-title">${i.title}</div>
+      <div class="timeline-desc">${i.desc}</div>
+    </div>`).join('');
+}
+
+// Policy - Bills grid
+function renderBills() {
+  const statusBadge = (s) => {
+    if (s.startsWith('Passed')) return 'open';
+    if (s === 'Failed' || s === 'Dead') return 'closed';
+    if (s === 'Stalled') return 'coming';
+    return 'coming';
+  };
+  document.getElementById('bills-grid').innerHTML = BILLS.map(b => `
+    <div class="card" style="border-left:3px solid ${b.status.startsWith('Passed') ? 'var(--color-success)' : b.status === 'Failed' || b.status === 'Dead' ? 'var(--color-error)' : b.status === 'Stalled' ? 'var(--color-warning)' : 'var(--color-accent-bright)'}">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:var(--space-2)">
+        <span class="mono" style="font-size:var(--text-xs);font-weight:700;color:var(--color-accent-text)">${b.id}</span>
+        <span class="badge badge-${statusBadge(b.status)}">${b.status}</span>
+      </div>
+      <div style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-2)">${b.name}</div>
+      <p style="font-size:var(--text-xs);color:var(--color-text-muted)">${b.desc}</p>
+      <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2)">
+        <span class="badge badge-sector">${b.category}</span>
+        <span class="badge" style="background:${b.impact==='High'?'rgba(45,212,191,0.12)':b.impact==='Medium'?'rgba(251,191,36,0.12)':'rgba(120,120,120,0.12)'};color:${b.impact==='High'?'var(--color-accent-text)':b.impact==='Medium'?'var(--color-warning)':'var(--color-text-faint)'}">${b.impact} Impact</span>
+      </div>
+    </div>`).join('');
+}
+
+// Investors
+function renderInvestors(typeFilter = 'all') {
+  const types = [...new Set(INVESTORS.map(i => i.type))];
+  document.getElementById('investor-filters').innerHTML =
+    `<button class="chip ${typeFilter==='all'?'active':''}" onclick="renderInvestors('all')">All (${INVESTORS.length})</button>` +
+    types.map(t => `<button class="chip ${typeFilter===t?'active':''}" onclick="renderInvestors('${t}')">${t} (${INVESTORS.filter(i=>i.type===t).length})</button>`).join('');
+
+  const filtered = typeFilter === 'all' ? INVESTORS : INVESTORS.filter(i => i.type === typeFilter);
+  document.getElementById('investor-grid').innerHTML = filtered.map(inv => `
+    <div class="card" style="display:flex;flex-direction:column;gap:var(--space-3)">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div>
+          <div style="font-size:var(--text-sm);font-weight:700"><a href="${inv.url}" target="_blank" rel="noopener noreferrer">${inv.name}</a></div>
+          <div style="font-size:var(--text-xs);color:var(--color-text-muted)">${inv.type} · ${inv.hq}</div>
+        </div>
+      </div>
+      <div style="font-size:var(--text-xs);color:var(--color-text-muted)"><strong>Focus:</strong> ${inv.focus}</div>
+      <div style="display:flex;gap:var(--space-4);font-size:var(--text-xs)">
+        <div><span style="color:var(--color-text-faint)">Check:</span> <strong>${inv.check}</strong></div>
+        <div><span style="color:var(--color-text-faint)">AUM:</span> <strong>${inv.aum}</strong></div>
+      </div>
+      <div style="font-size:var(--text-xs);color:var(--color-accent-text);font-weight:500">${inv.connection}</div>
+      <div style="display:flex;gap:2px;flex-wrap:wrap">${inv.sectors.map(s => `<span class="badge badge-sector">${s}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+// Members
+function renderMembers(sectorFilter = 'all') {
+  const filtered = sectorFilter === 'all' ? MEMBERS : MEMBERS.filter(m => m.sector === sectorFilter);
+  document.getElementById('members-grid').innerHTML = filtered.map(m => `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:var(--space-2)">
+        <div style="font-size:var(--text-sm);font-weight:700">${m.url && m.url !== '#' ? `<a href="${m.url}" target="_blank" rel="noopener noreferrer">${m.name}</a>` : m.name}</div>
+        <span class="badge badge-sector">${m.sector}</span>
+      </div>
+      <p style="font-size:var(--text-xs);color:var(--color-text-muted)">${m.desc}</p>
+      ${m.founder ? `<div style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:var(--space-2)">Founded by ${m.founder}</div>` : ''}
+    </div>`).join('');
+}
+
+function filterMembers(sector, el) {
+  document.querySelectorAll('#page-members .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderMembers(sector);
+}
+
+// Events
+function renderEvents() {
+  const now = new Date();
+  const sorted = [...EVENTS].sort((a, b) => new Date(a.date) - new Date(b.date));
+  document.getElementById('events-list').innerHTML = sorted.map(e => {
+    const d = new Date(e.date);
+    const diff = Math.ceil((d - now) / 86400000);
+    const isPast = diff < 0;
+    const typeColors = { deadline: 'var(--color-error)', event: 'var(--color-accent-bright)', milestone: 'var(--color-success)', compliance: 'var(--color-warning)' };
+    const typeLabels = { deadline: 'Deadline', event: 'Event', milestone: 'Milestone', compliance: 'Compliance' };
+    return `<div class="card" style="${isPast?'opacity:0.5':''}">
+      <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:var(--space-2)">
+        <div>
+          <div style="font-size:var(--text-sm);font-weight:700"><a href="${e.url}" target="_blank" rel="noopener noreferrer">${e.name}</a></div>
+          <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:2px">${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · ${e.location}</div>
+          <p style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:var(--space-2)">${e.desc}</p>
+        </div>
+        <div style="text-align:right">
+          <span class="badge" style="background:${typeColors[e.type]}20;color:${typeColors[e.type]}">${typeLabels[e.type]}</span>
+          <div style="font-size:var(--text-sm);font-weight:800;margin-top:var(--space-2);color:${isPast?'var(--color-text-faint)':diff<=7?'var(--color-error)':diff<=30?'var(--color-warning)':'var(--color-accent-text)'}">${isPast ? 'Past' : `${diff} days`}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Ecosystem Graph
+function renderEcosystem() {
+  const container = document.getElementById('ecosystem-graph');
+  const width = container.clientWidth || 800;
+  const height = 500;
+  container.innerHTML = '';
+
+  const svg = d3.select(container).append('svg')
+    .attr('width', width).attr('height', height)
+    .attr('viewBox', [0, 0, width, height]);
+
+  const colorMap = { hub: '#2DD4BF', startup: '#4ade80', fund: '#fbbf24', institution: '#a78bfa', government: '#60a5fa', event: '#f472b6' };
+
+  const simulation = d3.forceSimulation(ECOSYSTEM_NODES)
+    .force('link', d3.forceLink(ECOSYSTEM_LINKS).id(d => d.id).distance(80))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => d.size + 10));
+
+  const link = svg.append('g')
+    .selectAll('line')
+    .data(ECOSYSTEM_LINKS).join('line')
+    .attr('stroke', 'var(--color-divider)').attr('stroke-opacity', 0.6).attr('stroke-width', 1);
+
+  const node = svg.append('g')
+    .selectAll('g')
+    .data(ECOSYSTEM_NODES).join('g')
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end', (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
+    );
+
+  node.append('circle')
+    .attr('r', d => d.size)
+    .attr('fill', d => colorMap[d.group] || '#888')
+    .attr('fill-opacity', 0.8)
+    .attr('stroke', d => colorMap[d.group] || '#888')
+    .attr('stroke-opacity', 0.3)
+    .attr('stroke-width', 3);
+
+  node.append('text')
+    .text(d => d.label)
+    .attr('font-size', d => d.size > 12 ? '11px' : '9px')
+    .attr('font-weight', d => d.size > 12 ? '600' : '400')
+    .attr('fill', 'var(--color-text)')
+    .attr('text-anchor', 'middle')
+    .attr('dy', d => d.size + 14);
+
+  simulation.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+
+  // Legend
+  const groups = [
+    { key: 'hub', label: '9Zero Hub', color: colorMap.hub },
+    { key: 'startup', label: 'Startups', color: colorMap.startup },
+    { key: 'fund', label: 'Investors/Funds', color: colorMap.fund },
+    { key: 'institution', label: 'Institutions', color: colorMap.institution },
+    { key: 'government', label: 'Government', color: colorMap.government },
+    { key: 'event', label: 'Events', color: colorMap.event },
+  ];
+  document.getElementById('ecosystem-legend').innerHTML = groups.map(g => `
+    <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs)">
+      <div style="width:12px;height:12px;border-radius:50%;background:${g.color}"></div>
+      <span>${g.label}</span>
+    </div>`).join('');
+}
+
+// Carbon Calculator
+let carbonChart = null;
+function updateCalc() {
+  const type = document.getElementById('calc-type').value;
+  const scale = parseFloat(document.getElementById('calc-scale').value) || 100;
+  const location = document.getElementById('calc-location').value;
+  const years = parseInt(document.getElementById('calc-years').value) || 25;
+
+  // CO2 factors (metric tons/year per unit)
+  const factors = {
+    solar: { seattle: 0.3, pse: 1.2, 'wa-avg': 0.8 },      // per kW
+    heatpump: { seattle: 1.5, pse: 2.8, 'wa-avg': 2.2 },    // per unit
+    'ev-fleet': { seattle: 4.2, pse: 5.8, 'wa-avg': 5.0 },   // per vehicle
+    'ev-charging': { seattle: 8, pse: 12, 'wa-avg': 10 },     // per station
+    storage: { seattle: 0.5, pse: 1.8, 'wa-avg': 1.2 },      // per kWh
+    weatherization: { seattle: 0.003, pse: 0.005, 'wa-avg': 0.004 }, // per sqft
+  };
+
+  const annualCO2 = scale * (factors[type]?.[location] || 1);
+  const totalCO2 = annualCO2 * years;
+  const trees = Math.round(totalCO2 / 0.06);  // ~0.06 tCO2/tree/year * lifetime
+  const cars = Math.round(totalCO2 / 4.6);     // ~4.6 tCO2/car/year
+  const homes = Math.round(annualCO2 / 7.5);   // ~7.5 tCO2/home/year
+
+  document.getElementById('calc-co2').textContent = totalCO2.toLocaleString(undefined, {maximumFractionDigits: 0});
+  document.getElementById('calc-trees').textContent = trees.toLocaleString();
+  document.getElementById('calc-cars').textContent = cars.toLocaleString();
+  document.getElementById('calc-homes').textContent = homes.toLocaleString();
+
+  // Chart
+  const labels = Array.from({length: years}, (_, i) => `Year ${i + 1}`);
+  const data = labels.map((_, i) => annualCO2 * (1 + i * 0.01)); // slight increase over time
+
+  if (carbonChart) carbonChart.destroy();
+  const ctx = document.getElementById('chart-carbon');
+  if (!ctx) return;
+  carbonChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Annual CO₂ Reduction (tCO₂)', data, backgroundColor: 'rgba(45,212,191,0.4)', borderColor: 'rgba(45,212,191,1)', borderWidth: 1, borderRadius: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { color: 'var(--color-text-muted)', font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { color: 'var(--color-text-muted)', font: { size: 9 }, maxTicksLimit: 10 } }
+      }
+    }
+  });
+}
+
+// Dashboard Charts
+function renderCharts() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#6e9484' : '#5a7066';
+
+  // Funding pipeline
+  new Chart(document.getElementById('chart-funding-pipeline'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Open', 'Rolling', 'Monitoring', 'Closed'],
+      datasets: [{ data: [7, 3, 2, 3], backgroundColor: ['#4ade80', '#fbbf24', '#60a5fa', '#6b7280'], borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 11 }, padding: 16, usePointStyle: true } } }
+    }
+  });
+
+  // Sector chart
+  new Chart(document.getElementById('chart-sector'), {
+    type: 'bar',
+    data: {
+      labels: ['Nuclear/Fusion', 'Batteries', 'Carbon/Clean', 'EV/Mobility', 'Solar/Wind', 'Software'],
+      datasets: [{ label: 'Investment ($M)', data: [1075, 430, 23, 31, 50, 20], backgroundColor: ['#2DD4BF', '#5eead4', '#4ade80', '#fbbf24', '#a78bfa', '#60a5fa'], borderRadius: 6, borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { color: textColor, font: { size: 10 } } },
+        y: { grid: { display: false }, ticks: { color: textColor, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  document.querySelector(`[data-page="${pageId}"]`).classList.add('active');
+
+  const titles = {
+    dashboard: 'Dashboard', grants: 'Grant Matchmaker', rfps: 'RFP Tracker',
+    policy: 'Policy Tracker', investors: 'Investor Explorer', members: 'Members',
+    events: 'Events Calendar', ecosystem: 'Ecosystem Network', calculator: 'Carbon Calculator'
+  };
+  document.getElementById('page-title').textContent = titles[pageId] || pageId;
+
+  // Lazy render
+  if (pageId === 'ecosystem') renderEcosystem();
+  if (pageId === 'calculator') updateCalc();
+
+  document.getElementById('main-content').scrollTop = 0;
+  closeSidebar();
+}
+
+function showPolicyTab(tabId) {
+  document.querySelectorAll('.policy-tab').forEach(t => { t.style.display = 'none'; t.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('policy-' + tabId);
+  el.style.display = 'flex'; el.classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Theme
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  document.getElementById('theme-icon').innerHTML = next === 'dark'
+    ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+    : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+}
+
+// Mobile sidebar
+function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('open'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); }
+
+// Global search
+document.getElementById('global-search').addEventListener('input', function(e) {
+  const q = e.target.value.toLowerCase();
+  if (!q) return;
+  // Simple: navigate to most relevant page
+  if (q.includes('grant') || q.includes('fund')) showPage('grants');
+  else if (q.includes('rfp') || q.includes('procur')) showPage('rfps');
+  else if (q.includes('polic') || q.includes('beps') || q.includes('bill')) showPage('policy');
+  else if (q.includes('invest') || q.includes('vc') || q.includes('angel')) showPage('investors');
+  else if (q.includes('member') || q.includes('company') || q.includes('startup')) showPage('members');
+  else if (q.includes('event') || q.includes('calendar') || q.includes('pnw')) showPage('events');
+  else if (q.includes('eco') || q.includes('map') || q.includes('network')) showPage('ecosystem');
+  else if (q.includes('carbon') || q.includes('calc') || q.includes('co2')) showPage('calculator');
+});
+
+// Grant filters
+document.getElementById('grant-search').addEventListener('input', () => {
+  renderGrants({ search: document.getElementById('grant-search').value, sector: document.getElementById('grant-sector-filter').value, status: document.getElementById('grant-status-filter').value });
+});
+document.getElementById('grant-sector-filter').addEventListener('change', () => {
+  renderGrants({ search: document.getElementById('grant-search').value, sector: document.getElementById('grant-sector-filter').value, status: document.getElementById('grant-status-filter').value });
+});
+document.getElementById('grant-status-filter').addEventListener('change', () => {
+  renderGrants({ search: document.getElementById('grant-search').value, sector: document.getElementById('grant-sector-filter').value, status: document.getElementById('grant-status-filter').value });
+});
+
+// RFP filters
+document.getElementById('rfp-search').addEventListener('input', () => {
+  renderRFPs({ search: document.getElementById('rfp-search').value, status: document.getElementById('rfp-status-filter').value });
+});
+document.getElementById('rfp-status-filter').addEventListener('change', () => {
+  renderRFPs({ search: document.getElementById('rfp-search').value, status: document.getElementById('rfp-status-filter').value });
+});
+
+// ================================================================
+// INIT
+// ================================================================
+renderUrgentDeadlines();
+renderDashboardEvents();
+renderGrants();
+renderRFPs();
+renderBEPSTimeline();
+renderBills();
+renderInvestors();
+renderMembers();
+renderEvents();
+renderCharts();
+</script>
+<script data-pplx-inline-edit>
+(function(){
+  if(window===window.top)return;
+  function inlineAll(orig,clone){
+    if(orig.nodeType!==1)return;
+    try{
+      var cs=getComputedStyle(orig);
+      var t='';
+      for(var i=0;i<cs.length;i++){t+=cs[i]+':'+cs.getPropertyValue(cs[i])+';';}
+      clone.style.cssText=t;
+    }catch(e){}
+    var oc=orig.children,cc=clone.children;
+    for(var j=0;j<oc.length&&j<cc.length;j++){inlineAll(oc[j],cc[j]);}
+  }
+  function stripExternal(clone){
+    var imgs=clone.querySelectorAll('img');
+    for(var i=0;i<imgs.length;i++){
+      var s=imgs[i].getAttribute('src');
+      if(s&&!s.startsWith('data:'))imgs[i].removeAttribute('src');
+    }
+    var all=clone.querySelectorAll('*');
+    for(var i=0;i<all.length;i++){
+      var st=all[i].style.cssText;
+      if(st&&st.indexOf('url(')>=0){
+        all[i].style.cssText=st.replace(/url\(["']?(?!data:)[^)"']*["']?\)/gi,'none');
+      }
+    }
+  }
+  window.addEventListener('message',function(e){
+    if(!e.data||e.data.type!=='INLINE_EDIT_CAPTURE_REQUEST')return;
+    var scrollX=window.scrollX||window.pageXOffset||0;
+    var scrollY=window.scrollY||window.pageYOffset||0;
+    var w=window.innerWidth,h=window.innerHeight;
+    try{
+      var clone=document.documentElement.cloneNode(true);
+      var rm=clone.querySelectorAll('script,link[rel="stylesheet"],style');
+      for(var i=0;i<rm.length;i++){rm[i].remove();}
+      inlineAll(document.documentElement,clone);
+      stripExternal(clone);
+      var html=new XMLSerializer().serializeToString(clone);
+      var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'
+        +'<foreignObject width="100%" height="100%">'
+        +'<div xmlns="http://www.w3.org/1999/xhtml" style="width:'+w+'px;height:'+h+'px;overflow:hidden">'
+        +'<div style="transform:translate(-'+scrollX+'px,-'+scrollY+'px);transform-origin:top left">'
+        +html+'</div></div></foreignObject></svg>';
+      var svgUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+      var img=new Image();
+      img.onload=function(){
+        var c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0);
+        window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:c.toDataURL('image/png'),scrollX:scrollX,scrollY:scrollY},'*');
+      };
+      img.onerror=function(){
+        window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:null,scrollX:scrollX,scrollY:scrollY},'*');
+      };
+      img.src=svgUrl;
+    }catch(err){
+      window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:null,scrollX:scrollX,scrollY:scrollY},'*');
+    }
+  });
+})();
+</script></body>
+</html>
